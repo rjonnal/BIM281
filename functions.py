@@ -19,13 +19,43 @@ def fourier_basis(t,n,T0=1.0):
     specified by t."""
     return np.exp(1j*2*np.pi*n*t/T0)
 
-def fourier_synthesize(t,coefs):
+def fourier_synthesis(t,coefs,T0=1.0):
     """Synthesize a signal from Fourier basis coefficients, evaluated
     at points specified by t."""
     superposition = np.zeros(t.shape)
     for idx,c in enumerate(coefs):
-        superposition = superposition + c*fourier_basis(t,idx)
+        superposition = superposition + c*fourier_basis(t,idx,T0)
     return superposition
+
+def fourier_analysis(t,signal,N,T0_start=None,T0_end=None):
+    dt = t[1]-t[0]
+    out = np.zeros(N,dtype=np.complex)
+    period_indices = np.where(np.logical_and(t>=T0_start,t<T0_end))[0]
+    T0 = T0_end-T0_start
+    for n in range(N):
+        out[n] = np.sum(signal[period_indices]*np.exp(-1j*2*np.pi*n*t[period_indices]/T0)*dt)/T0
+    return out
+
+def analyze(signal,t,n,T0):
+    dt = np.diff(t)[0]
+    T0_idx = int(round(T0/dt))
+    return np.sum(np.exp(-1j*2*np.pi*n*t[:T0_idx]/T0)*signal[:T0_idx]*dt)
+
+def neaten(yticks=[0,1]):
+    xt_arr = plt.gca().get_xticks()
+    xtl_arr = []
+    for xt in xt_arr:
+        if xt==0:
+            xtl_arr.append('$0$')
+        elif xt%1:
+            xtl_arr.append('$%0.1f\cdot T$'%xt)
+        else:
+            xtl_arr.append('$%dT$'%xt)
+    plt.gca().set_xticklabels(xtl_arr)
+    plt.xlabel('$t$')
+    plt.yticks([0,1])
+    plt.legend()
+
 
 def u(t):
     out = np.zeros(len(t))
@@ -238,10 +268,17 @@ def get_t(s,dt=0.1):
 
 if __name__=='__main__':
 
-    t_arr = get_tau(4)
-    sq = square(t_arr,t0=0.0,T=1.0,D=0.5,A=3.0)
-    plt.plot(t_arr,sq)
-    
+    dt = 0.001
+    t_arr = np.arange(-3,3,dt)
+    r = rect(t_arr,t0=-0.5,T=1.0)
+
+    plt.figure()
+    plt.plot(t_arr,r)
+    plt.figure()
+
+    freq = np.arange(n_terms)*1.0/T
+    plt.plot(np.abs(fourier_analysis(t_arr,r,100,T0_start=-1,T0_end=1.0)))
+    plt.plot(np.abs(fourier_analysis(t_arr,r,100,T0_start=-2,T0_end=2.0)))
     plt.show()
 
     sys.exit()
