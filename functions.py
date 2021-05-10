@@ -27,13 +27,13 @@ def fourier_synthesis(t,coefs,T0=1.0):
         superposition = superposition + c*fourier_basis(t,idx,T0)
     return superposition
 
-def fourier_analysis(t,signal,N,T0_start=None,T0_end=None):
+def fourier_analysis(t,signal,N_arr,T0_start=None,T0_end=None):
     dt = t[1]-t[0]
-    out = np.zeros(N,dtype=np.complex)
+    out = np.zeros(N_arr.shape,dtype=np.complex)
     period_indices = np.where(np.logical_and(t>=T0_start,t<T0_end))[0]
     T0 = T0_end-T0_start
-    for n in range(N):
-        out[n] = np.sum(signal[period_indices]*np.exp(-1j*2*np.pi*n*t[period_indices]/T0)*dt)/T0
+    for idx,n in enumerate(N_arr):
+        out[idx] = np.sum(signal[period_indices]*np.exp(-1j*2*np.pi*n*t[period_indices]/T0)*dt)/T0
     return out
 
 def analyze(signal,t,n,T0):
@@ -88,7 +88,13 @@ def rect(t,t0=0.0,T=1.0,A=1.0):
 
 def tri(t,t0=0.0,T=1.0,A=1.0):
     out = np.zeros(len(t))
-    start = np.argmin(np.abs(t-t0))
+    out[np.abs(t-t0)<T] = (1-np.abs(t-t0)/T)[np.abs(t-t0)<T]
+    out = out*A
+    return out
+
+def tri_old(t,t0=0.0,T=1.0,A=1.0):
+    out = np.zeros(len(t))
+    start = np.argmin(np.abs(t-t0+T))
     end = np.argmin(np.abs((t-(t0+T))))
     mid = int(round((start+end)/2.0))
     ramp1 = np.linspace(0,A,mid-start)
@@ -105,6 +111,31 @@ def square(t,t0=0.0,T=1.0,A=1.0,D=0.5):
     out[np.where((t-t0)%T<(D*T))]=A
     return out
 
+
+def comb(t,t0=0.0,T=1.0):
+    dt = t[1]-t[0]
+    out = np.zeros(t.shape)
+    out[np.where((t-t0)%T<dt)]=1.0
+    return out
+
+def plot_samples(x,y,comb,ax=None,**kwargs):
+    assert len(x)==len(y)==len(comb)
+    if ax is None:
+        ax = plt.gca()
+
+    for idx in np.where(comb>0.5)[0]:
+        sample_x = x[idx]
+        plt.axvline(sample_x,**kwargs)
+
+    plt.grid(False)
+
+def get_sampled_function(x,y,comb):
+    assert len(x)==len(y)==len(comb)
+    idx = np.where(comb>0.5)[0]
+    sample_x = x[idx]
+    sample_y = y[idx]
+    return sample_x,sample_y
+    
 def convolve(signal_1,signal_2,tau_arr,t_arr,signal_1_label='',signal_2_label='',ylim=None,stretch=True):
     signal_2_rev = signal_2[::-1]
     dt = np.mean(np.diff(tau_arr))
