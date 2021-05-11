@@ -4,6 +4,24 @@ from matplotlib import pyplot as plt
 import sys,os
 from matplotlib import animation
 
+def pad(ax=None,frac=0.1):
+    """Add some vertical padding to a plot."""
+    if ax is None:
+        ax = plt.gca()
+    ymin = np.inf
+    ymax = -np.inf
+    for line in ax.lines:
+        yd = line.get_ydata()
+        if yd.min()<ymin:
+            ymin = yd.min()
+        if yd.max()>ymax:
+            ymax = yd.max()
+            
+    yr = ymax-ymin
+    ylim = ((ymin-yr*frac,ymax+yr*frac))
+    ax.set_ylim(ylim)
+
+
 def despine(ax=None):
     """Remove the spines from a plot. (These are the lines drawn
     around the edge of the plot.)"""
@@ -81,9 +99,15 @@ def delta(t,t0=0.0,T=1.0,A=1.0):
     out[np.argmin(np.abs(t-t0))]=1.0
     return out
 
-def rect(t,t0=0.0,T=1.0,A=1.0):
+def rect_old(t,t0=0.0,T=1.0,A=1.0):
     out = np.zeros(len(t))
     out[np.where(np.logical_and(t>t0,t<=t0+T))]=A
+    return out
+
+
+def rect(t,t0=0.0,T=1.0,A=1.0):
+    out = np.zeros(len(t))
+    out[np.abs(t-t0)<T/2.0] = A
     return out
 
 def tri(t,t0=0.0,T=1.0,A=1.0):
