@@ -3,6 +3,11 @@ from fig2gif import GIF
 from matplotlib import pyplot as plt
 import sys,os
 from matplotlib import animation
+from .constants import print_dpi
+
+def savefig(fn,dpi=print_dpi):
+    plt.savefig(fn,dpi=dpi)
+    print('![](%s)'%fn)
 
 def pad(ax=None,frac=0.1):
     """Add some vertical padding to a plot."""
@@ -20,8 +25,36 @@ def pad(ax=None,frac=0.1):
     yr = ymax-ymin
     ylim = ((ymin-yr*frac,ymax+yr*frac))
     ax.set_ylim(ylim)
+    
 
+def dots(ax=None,border_fraction=0.03,markersize=4):
+    if ax is None:
+        ax = plt.gca()
+        
+    ylim = ax.get_ylim()
+    xlim = ax.get_xlim()
 
+    lines = ax.lines
+
+    xmax = -np.inf
+    ymax = -np.inf
+    xmin = np.inf
+    ymin = np.inf
+
+    ymin,ymax = ylim
+    xmin,xmax = xlim
+    
+    doty = (ymin+ymax)/2.0
+    xr = xmax-xmin
+    leftx = np.linspace(xmin+xr*border_fraction*0.1,xmin+xr*border_fraction,3)
+    rightx = np.linspace(xmax-xr*border_fraction*0.1,xmax-xr*border_fraction,3)
+    for lx in leftx:
+        ax.plot(lx,doty,'k.',markersize=markersize)
+        print(lx,doty)
+    for rx in rightx:
+        ax.plot(rx,doty,'k.',markersize=markersize)
+    
+    
 def despine(ax=None):
     """Remove the spines from a plot. (These are the lines drawn
     around the edge of the plot.)"""
@@ -98,6 +131,7 @@ def delta(t,t0=0.0,T=1.0,A=1.0):
     out = np.zeros(len(t))
     out[np.argmin(np.abs(t-t0))]=1.0
     return out
+
 
 def rect_old(t,t0=0.0,T=1.0,A=1.0):
     out = np.zeros(len(t))
